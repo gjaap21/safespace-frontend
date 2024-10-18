@@ -2,6 +2,7 @@
 import CreatePostForm from "@/components/Post/CreatePostForm.vue";
 import EditPostForm from "@/components/Post/EditPostForm.vue";
 import PostComponent from "@/components/Post/PostComponent.vue";
+import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { fetchy } from "@/utils/fetchy";
 import { storeToRefs } from "pinia";
@@ -25,6 +26,10 @@ async function getPosts(author?: string) {
   }
   searchAuthor.value = author ? author : "";
   posts.value = postResults;
+}
+
+async function reportPost(postId: string) {
+  void router.push({ path: `/report/${postId}` });
 }
 
 function updateEditing(id: string) {
@@ -51,6 +56,9 @@ onBeforeMount(async () => {
     <article v-for="post in posts" :key="post._id">
       <PostComponent v-if="editing !== post._id" :post="post" @refreshPosts="getPosts" @editPost="updateEditing" />
       <EditPostForm v-else :post="post" @refreshPosts="getPosts" @editPost="updateEditing" />
+      <div class="post-interaction">
+        <button class="button-error btn-small pure-button" @click="reportPost(post._id)">Report</button>
+      </div>
     </article>
   </section>
   <p v-else-if="loaded">No posts found</p>
@@ -89,5 +97,11 @@ article {
   justify-content: space-between;
   margin: 0 auto;
   max-width: 60em;
+}
+
+.post-interaction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 </style>
