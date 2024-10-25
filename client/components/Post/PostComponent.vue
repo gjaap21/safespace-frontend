@@ -2,11 +2,53 @@
 import { useUserStore } from "@/stores/user";
 import { formatDate } from "@/utils/formatDate";
 import { storeToRefs } from "pinia";
+import { onMounted, ref } from "vue";
 import { fetchy } from "../../utils/fetchy";
 
 const props = defineProps(["post"]);
 const emit = defineEmits(["editPost", "refreshPosts"]);
 const { currentUsername } = storeToRefs(useUserStore());
+
+const postImage = ref<HTMLCanvasElement | null>(null);
+
+// const displayPost = async () => {
+//   const image = await fetchy("/api/blur", "POST", { body: { id: props.post._id } });
+//   postImage.value!.appendChild(image);
+// };
+const displayPost = async () => {
+  // console.log("hi");
+  if (!postImage.value) return;
+  // console.log("yo");
+  const context = postImage.value.getContext("2d");
+  if (!context) return;
+
+  // context.fillStyle = "lightblue"; // Background color
+  // context.fillRect(0, 0, postImage.value.width, postImage.value.height);
+
+  // // Draw a rectangle
+  // context.fillStyle = "orange"; // Rectangle color
+  // context.fillRect(50, 50, 200, 100); // (x, y, width, height)
+
+  const img = new Image();
+  img.src = props.post.image;
+  img.crossOrigin = "Anonymous";
+
+  img.onerror = () => {
+    console.error("Failed to load image:", props.post.image);
+  };
+
+  img.onload = () => {
+    postImage.value!.width = img.width;
+    postImage.value!.height = img.height;
+
+    // context.filter = `blur(${props.blurIntensity}px)`;
+    context!.drawImage(img, 0, 0);
+  };
+};
+
+onMounted(async () => {
+  await displayPost();
+});
 
 const deletePost = async () => {
   try {
@@ -21,6 +63,10 @@ const deletePost = async () => {
 <template>
   <p class="author">{{ props.post.author }}</p>
   <p>{{ props.post.image }}</p>
+  <!-- <div ref="postImage"></div> -->
+  <div>
+    <canvas ref="postImage" width="500" height="500"></canvas>
+  </div>
   <p>{{ props.post.caption }}</p>
   <div class="base">
     <menu v-if="props.post.author == currentUsername">
@@ -68,5 +114,9 @@ menu {
 
 .base article:only-child {
   margin-left: auto;
+}
+
+canvas {
+  border: 1px solid #ccc; /* Optional: for better visibility */
 }
 </style>

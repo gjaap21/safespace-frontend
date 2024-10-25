@@ -270,7 +270,7 @@ class Routes {
     const post = await Posting.getPost(postId);
     if (post) {
       const inFilter = await Blurring.inFilter(user, post.author);
-      return inFilter ? await Blurring.blur(post.image) : post.image;
+      return inFilter ? await Blurring.blur(post.image) : await Blurring.blur(post.image, 0);
     }
   }
 
