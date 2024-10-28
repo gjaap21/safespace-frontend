@@ -64,7 +64,7 @@ export default class PostingConcept {
     const matches = url.match(regex);
     const fileId = matches ? matches[1] : null;
     if (fileId === null) throw new NotFoundError("Image link is not in the appropriate format.");
-    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    return `https://drive.google.com/file/d/${fileId}/preview`;
   }
 
   async assertAuthorIsUser(_id: ObjectId, user: ObjectId) {

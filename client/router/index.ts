@@ -5,6 +5,7 @@ import { useUserStore } from "@/stores/user";
 import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/LoginView.vue";
 import NotFoundView from "../views/NotFoundView.vue";
+import ProfileView from "../views/ProfileView.vue";
 import ReportView from "../views/ReportView.vue";
 import SettingView from "../views/SettingView.vue";
 
@@ -38,6 +39,12 @@ const router = createRouter({
       path: "/report/:postId",
       name: "Report",
       component: ReportView,
+      props: true,
+    },
+    {
+      path: "/profile/:username",
+      name: "Profile",
+      component: ProfileView,
       props: true,
     },
     {

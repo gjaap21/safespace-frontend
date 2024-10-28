@@ -1,76 +1,46 @@
 <script setup lang="ts">
+import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { formatDate } from "@/utils/formatDate";
 import { storeToRefs } from "pinia";
-import { onMounted, ref } from "vue";
 import { fetchy } from "../../utils/fetchy";
+import CommentListComponent from "../Comment/CommentListComponent.vue";
+import LikeComponent from "../Like/LikeComponent.vue";
+import BasicPostComponent from "./BasicPostComponent.vue";
 
 const props = defineProps(["post"]);
 const emit = defineEmits(["editPost", "refreshPosts"]);
-const { currentUsername } = storeToRefs(useUserStore());
-
-const postImage = ref<HTMLCanvasElement | null>(null);
-
-// const displayPost = async () => {
-//   const image = await fetchy("/api/blur", "POST", { body: { id: props.post._id } });
-//   postImage.value!.appendChild(image);
-// };
-const displayPost = async () => {
-  // console.log("hi");
-  if (!postImage.value) return;
-  // console.log("yo");
-  const context = postImage.value.getContext("2d");
-  if (!context) return;
-
-  // context.fillStyle = "lightblue"; // Background color
-  // context.fillRect(0, 0, postImage.value.width, postImage.value.height);
-
-  // // Draw a rectangle
-  // context.fillStyle = "orange"; // Rectangle color
-  // context.fillRect(50, 50, 200, 100); // (x, y, width, height)
-
-  const img = new Image();
-  img.src = props.post.image;
-  img.crossOrigin = "Anonymous";
-
-  img.onerror = () => {
-    console.error("Failed to load image:", props.post.image);
-  };
-
-  img.onload = () => {
-    postImage.value!.width = img.width;
-    postImage.value!.height = img.height;
-
-    // context.filter = `blur(${props.blurIntensity}px)`;
-    context!.drawImage(img, 0, 0);
-  };
-};
-
-onMounted(async () => {
-  await displayPost();
-});
+const { currentUsername, isAdmin } = storeToRefs(useUserStore());
 
 const deletePost = async () => {
   try {
-    await fetchy(`/api/posts/${props.post._id}`, "DELETE");
+    if (isAdmin) {
+      await fetchy(`/api/admins/${props.post._id}`, "DELETE");
+    } else await fetchy(`/api/posts/${props.post._id}`, "DELETE");
   } catch {
     return;
   }
   emit("refreshPosts");
 };
+
+async function toProfile(username: string) {
+  void router.push({ path: `/profile/${username}` });
+}
 </script>
 
 <template>
-  <p class="author">{{ props.post.author }}</p>
-  <p>{{ props.post.image }}</p>
-  <!-- <div ref="postImage"></div> -->
-  <div>
-    <canvas ref="postImage" width="500" height="500"></canvas>
+  <p class="author" @click="toProfile(props.post.author)">{{ props.post.author }}</p>
+  <div class="main">
+    <BasicPostComponent :post="props.post" />
+    <div class="post-actions">
+      <CommentListComponent :postId="props.post._id" />
+      <div class="likes">
+        <LikeComponent :item="props.post" />
+      </div>
+    </div>
   </div>
-  <p>{{ props.post.caption }}</p>
   <div class="base">
-    <menu v-if="props.post.author == currentUsername">
-      <li><button class="btn-small pure-button" @click="emit('editPost', props.post._id)">Edit</button></li>
+    <menu v-if="props.post.author == currentUsername || isAdmin">
       <li><button class="button-error btn-small pure-button" @click="deletePost">Delete</button></li>
     </menu>
     <article class="timestamp">
@@ -88,6 +58,7 @@ p {
 .author {
   font-weight: bold;
   font-size: 1.2em;
+  cursor: pointer;
 }
 
 menu {
@@ -116,7 +87,15 @@ menu {
   margin-left: auto;
 }
 
-canvas {
-  border: 1px solid #ccc; /* Optional: for better visibility */
+.main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.post-actions {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
 }
 </style>

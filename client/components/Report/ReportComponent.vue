@@ -1,23 +1,47 @@
 <script setup lang="ts">
 import { formatDate } from "@/utils/formatDate";
+import { onBeforeMount, ref } from "vue";
 import { fetchy } from "../../utils/fetchy";
+import BasicPostComponent from "../Post/BasicPostComponent.vue";
 
 const props = defineProps(["report"]);
-const emit = defineEmits(["refreshReports"]);
+console.log(props.report);
+const emit = defineEmits(["refreshReports", "refreshPosts"]);
+let post = ref<Record<string, string>>();
+let loaded = ref(false);
+
+const getPost = async () => {
+  let postResult;
+  try {
+    postResult = await fetchy(`/api/posts/${props.report.item}`, "GET");
+  } catch (_) {
+    return;
+  }
+  post.value = postResult;
+  console.log(postResult);
+};
+
+onBeforeMount(async () => {
+  await getPost();
+  loaded.value = true;
+});
 
 async function deleteReport(validity: string) {
   try {
-    await fetchy(`/api/reports/${props.report._id}`, "DELETE", { body: { validity } });
+    await fetchy(`/api/reports/${validity}/${props.report._id}`, "DELETE");
   } catch {
     return;
   }
   emit("refreshReports");
+  emit("refreshPosts");
 }
 </script>
 
 <template>
-  <p>{{ props.report.item }}</p>
-  <p>{{ props.report.info }}</p>
+  <div v-if="loaded" class="report-menu">
+    <BasicPostComponent :post="post" />
+    <p class="report-info">{{ props.report.info }}</p>
+  </div>
   <div class="base">
     <button class="btn-small pure-button" @click="deleteReport('true')">Validate</button>
     <button class="button-error btn-small pure-button" @click="deleteReport('false')">Invalidate</button>
@@ -57,5 +81,17 @@ menu {
 
 .base article:only-child {
   margin-left: auto;
+}
+
+.report-menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-info {
+  font-size: 1.2em;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 </style>

@@ -38,7 +38,9 @@ export default class LikingConcept {
 
     if (!check) {
       const _item = await this.itemLikes.readOne({ item });
-      _item ? await this.itemLikes.partialUpdateOne({ item }, { quantity: _item.quantity + 1 }) : await this.itemLikes.createOne({ item, quantity: 1 });
+      if (_item) {
+        await this.itemLikes.partialUpdateOne({ item }, { quantity: _item.quantity + 1 });
+      } else await this.itemLikes.createOne({ item, quantity: 1 });
     }
 
     return { msg: "Successfully liked!", like: await this.userLikes.readOne({ _id }) };

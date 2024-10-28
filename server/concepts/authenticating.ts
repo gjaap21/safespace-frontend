@@ -28,7 +28,7 @@ export default class AuthenticatingConcept {
     void this.users.collection.createIndex({ username: 1 });
 
     // Create original admin account that has the ability to create other admins
-    this.createOGAdmin();
+    void this.createOGAdmin();
   }
 
   async create(username: string, password: string) {

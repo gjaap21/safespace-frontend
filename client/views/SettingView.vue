@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UpdateFilterForm from "@/components/Setting/UpdateFilterForm.vue";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
@@ -24,5 +25,6 @@ async function delete_() {
     <button class="pure-button pure-button-primary" @click="logout">Logout</button>
     <button class="button-error pure-button" @click="delete_">Delete User</button>
     <UpdateUserForm />
+    <UpdateFilterForm />
   </main>
 </template>

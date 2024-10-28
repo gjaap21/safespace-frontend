@@ -110,7 +110,8 @@ class Routes {
   @Router.get("/posts/:id")
   async getPost(id: string) {
     const oid = new ObjectId(id);
-    return Posting.getPost(oid);
+    const post = await Posting.getPost(oid);
+    return Responses.post(post);
   }
 
   @Router.post("/posts")
@@ -223,8 +224,8 @@ class Routes {
     return await Reporting.create(oid, info);
   }
 
-  @Router.delete("/reports/:id")
-  async addressReport(session: SessionDoc, id: string, validity: string) {
+  @Router.delete("/reports/true/:id")
+  async addresstTrueReport(session: SessionDoc, id: string) {
     const user = Sessioning.getUser(session);
     await Authing.assertUserIsAdmin(user);
     const oid = new ObjectId(id);
@@ -233,33 +234,40 @@ class Routes {
     const post = await Posting.getPost(itemId);
     const comment = await Commenting.getComment(itemId);
     const author = post ? post.author : comment ? comment.author : undefined;
-    if (validity.toLowerCase() === "true") {
-      await Badging.give(author!, BadgeTypes.SHAME);
-      const likers = await Liking.getItemLikers(itemId);
-      await Promise.all(likers.map((liker) => Badging.give(liker, BadgeTypes.SHAME)));
-      await Posting.delete(itemId);
-      await Commenting.delete(itemId);
-    }
+    await Badging.give(author!, BadgeTypes.SHAME);
+    const likers = await Liking.getItemLikers(itemId);
+    await Promise.all(likers.map((liker) => Badging.give(liker, BadgeTypes.SHAME)));
+    await Posting.delete(itemId);
+    await Commenting.delete(itemId);
+    return await Reporting.remove(oid);
+  }
+
+  @Router.delete("/reports/false/:id")
+  async addressFalseReport(session: SessionDoc, id: string) {
+    const user = Sessioning.getUser(session);
+    await Authing.assertUserIsAdmin(user);
+    const oid = new ObjectId(id);
     return await Reporting.remove(oid);
   }
 
   @Router.get("/filters")
   async getFilters(session: SessionDoc) {
     const user = Sessioning.getUser(session);
-    return await Blurring.getFilters(user);
+    const filters = await Blurring.getFilters(user);
+    return Responses.filters(filters.map((id) => new ObjectId(id)));
   }
 
   @Router.post("/filters")
   async addFilter(session: SessionDoc, filterUser: string) {
     const user = Sessioning.getUser(session);
-    const someUser = new ObjectId(filterUser);
-    return await Blurring.addFilter(user, someUser);
+    const someUser = await Authing.getUserByUsername(filterUser);
+    return await Blurring.addFilter(user, someUser._id);
   }
 
-  @Router.delete("/filters/:id")
-  async deleteFilter(session: SessionDoc, filterUser: string) {
+  @Router.delete("/filters/:name")
+  async deleteFilter(session: SessionDoc, name: string) {
     const user = Sessioning.getUser(session);
-    const someUser = new ObjectId(filterUser);
+    const someUser = (await Authing.getUserByUsername(name))._id;
     return await Blurring.removeFilter(user, someUser);
   }
 
@@ -286,10 +294,12 @@ class Routes {
 
   @Router.get("/comments")
   async getItemComments(item?: string) {
+    let comments;
     if (item) {
       const oid = new ObjectId(item);
-      return await Commenting.getItemComments(oid);
-    } else return await Commenting.getComments();
+      comments = await Commenting.getItemComments(oid);
+    } else comments = await Commenting.getComments();
+    return Responses.comments(comments);
   }
 
   @Router.post("/comments")
@@ -307,13 +317,13 @@ class Routes {
     return Commenting.delete(oid);
   }
 
-  @Router.get("/likes/items")
-  async getItemLikes(item: string) {
-    const oid = new ObjectId(item);
+  @Router.get("/likes/items/:id")
+  async getItemLikes(id: string) {
+    const oid = new ObjectId(id);
     return await Liking.getItemLikeCount(oid);
   }
 
-  @Router.get("/likes/users")
+  @Router.get("/likes/users/:id")
   async getUserLikes(id: string) {
     const oid = new ObjectId(id);
     return await Liking.getUserLikes(oid);
@@ -327,9 +337,9 @@ class Routes {
   }
 
   @Router.delete("/likes/:id")
-  async removeLike(session: SessionDoc, item: string) {
+  async removeLike(session: SessionDoc, id: string) {
     const user = Sessioning.getUser(session);
-    const oid = new ObjectId(item);
+    const oid = new ObjectId(id);
     return await Liking.unlike(user, oid);
   }
 }

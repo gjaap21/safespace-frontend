@@ -5,7 +5,7 @@ import { storeToRefs } from "pinia";
 import { onBeforeMount, ref } from "vue";
 import ReportComponent from "./ReportComponent.vue";
 
-const { isLoggedIn } = storeToRefs(useUserStore());
+const { isAdmin } = storeToRefs(useUserStore());
 
 const loaded = ref(false);
 let reports = ref<Array<Record<string, string>>>([]);

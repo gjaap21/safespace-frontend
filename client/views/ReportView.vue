@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import PostComponent from "@/components/Post/PostComponent.vue";
+import BasicPostComponent from "@/components/Post/BasicPostComponent.vue";
 import ReportForm from "@/components/Report/ReportForm.vue";
 import { fetchy } from "@/utils/fetchy";
-import { ref } from "vue";
+import { onBeforeMount, ref } from "vue";
 
-let post = ref<Record<string, string>>();
 const props = defineProps(["postId"]);
+let post = ref<Record<string, string>>();
+let author = "";
 
 const getPost = async () => {
   let postResult;
@@ -15,14 +16,22 @@ const getPost = async () => {
     return;
   }
   post.value = postResult;
+  author = postResult.author;
 };
+
+onBeforeMount(async () => {
+  await getPost();
+});
 </script>
 
 <template>
   <main>
     <h1>Report</h1>
     <div class="report-menu">
-      <PostComponent :post="getPost" />
+      <div class="post-comp">
+        <p class="author">{{ author }}</p>
+        <BasicPostComponent :post="post" />
+      </div>
       <ReportForm :postId="props.postId" class="report-form" />
     </div>
   </main>
@@ -41,5 +50,16 @@ h1 {
 
 .report-form {
   width: 40%;
+}
+
+.author {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-bottom: 3px;
+}
+
+.post-comp {
+  display: flex;
+  flex-direction: column;
 }
 </style>
